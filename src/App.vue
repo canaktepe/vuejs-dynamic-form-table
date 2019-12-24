@@ -54,7 +54,7 @@ import { format, addMonths } from 'date-fns';
 export default {
   data: function() {
     return {
-      deleted:[],
+      deleted: [],
       months: [],
       countries: [],
       records: [
@@ -75,6 +75,12 @@ export default {
               ApsCouId: 25,
               ApsPrice: '100.15',
               ApsDate: '2019-11-01T00:00:00',
+            },
+            {
+              ApsId: 12,
+              ApsCouId: 25,
+              ApsPrice: '321.15',
+              ApsDate: '2019-12-01T00:00:00',
             },
           ],
         },
@@ -113,9 +119,9 @@ export default {
   },
   methods: {
     deleteRecord(index) {
-      this.deleted.push(this.records[index]);
-      this.records.splice(index, 1);
-      // this.records[index].Deleted = true;
+      // this.deleted.push(this.records[index]);
+      // this.records.splice(index, 1);
+      this.records[index].Deleted = true;
     },
     selectCountry(event, item) {
       if (event.target.value <= 0) return;
@@ -180,10 +186,24 @@ export default {
     },
   },
   watch: {
-    records: {
-      handler: function(val, oldVal) {
-        console.log(val);
-      }, deep: true,
+    'records': {
+      handler: function(after, before) {
+        after.forEach(element => {
+          console.log(element.MisAdvertiserPriceSettings);
+        });
+        before.forEach(element => {
+          console.log(element.MisAdvertiserPriceSettings);
+        });
+
+
+        // let changed = after.filter(function(p, idx) {
+        //   return Object.keys(p).some(function(prop) {
+        //     console.log(p[prop] != before[idx][prop]);
+        //     return p[prop] != before[idx][prop];
+        //   });
+        // });
+      },
+      deep: true,
     },
   },
 };
