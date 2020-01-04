@@ -22,9 +22,9 @@
           </td>
           <td v-for="(month, apsIdx) in months" :key="apsIdx">
             <money
-            @input="$v.records.$each[couIdx].MisAdvertiserPriceSettings.$each[apsIdx].ApsPrice.$touch()"
+              @input="$v.records.$each[couIdx].MisAdvertiserPriceSettings.$each[apsIdx].ApsPrice.$touch()"
               class="form-control form-control-sm text-right"
-              :class="{'is-invalid': $v.records.$each[couIdx].MisAdvertiserPriceSettings.$each[apsIdx].ApsPrice.$error}"
+              :class="{ 'is-invalid': $v.records.$each[couIdx].MisAdvertiserPriceSettings.$each[apsIdx].ApsPrice.$error }"
               v-if="item.MisAdvertiserPriceSettings[apsIdx] && month.date == item.MisAdvertiserPriceSettings[apsIdx].ApsDate"
               v-model="item.MisAdvertiserPriceSettings[apsIdx].ApsPrice"
             ></money>
@@ -60,27 +60,11 @@
 /* eslint-disable no-unused-vars */
 import { Money } from 'v-money';
 import { format, addMonths } from 'date-fns';
-
-const { required, minValue } = require('vuelidate/lib/validators');
+import validations from './form-validations/advertiserSettingValidators';
 
 export default {
   components: { Money },
-  validations: {
-    records: {
-      $each: {
-        MisAdvertiserPriceSettings: {
-          $each: {
-            ApsPrice: {
-              minValue: minValue(250),
-              isValidFloat(ApsPrice) {
-                return (/^-?[\d]*(\.[\d]+)?$/g).test(ApsPrice);
-              }
-            },
-          },
-        },
-      },
-    },
-  },
+  validations,
   data() {
     return {
       money: {
