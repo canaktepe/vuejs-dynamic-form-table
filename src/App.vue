@@ -134,7 +134,7 @@ export default {
       ],
     };
   },
-  mounted: function() {
+  created: function() {
     this.createMonths();
     this.getCountries();
   },
