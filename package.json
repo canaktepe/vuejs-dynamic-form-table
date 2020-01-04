@@ -10,7 +10,9 @@
   "dependencies": {
     "core-js": "^3.4.3",
     "date-fns": "^2.8.1",
-    "vue": "^2.6.10"
+    "v-money": "^0.8.1",
+    "vue": "^2.6.10",
+    "vuelidate": "^0.7.4"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.1.0",

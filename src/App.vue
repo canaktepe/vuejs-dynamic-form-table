@@ -1,59 +1,96 @@
 <template>
-  <div id="app">
-    <table>
-      <thead>
+  <div id="app" class="container mt-5">
+    <table class="table table-striped">
+      <thead class="thead-dark">
         <tr>
           <th>Country</th>
           <th v-for="(month, index) in months" :key="index">{{ month.name }}</th>
-          <th>Total</th>
+          <th class="text-right">Total</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(item, couIdx) in records" :key="couIdx">
-          <td>
-            <select v-if="item.NewRecord" @change="selectCountry($event, item)">
+          <td style="width:15%">
+            <select class="form-control form-control-sm" v-if="item.NewRecord" @change="selectCountry($event, item)">
               <option value="-1">Select</option>
               <option v-for="(country, ctidx) in countries" :key="ctidx" :value="country.CouId">{{ country.CouName }}</option>
             </select>
-            <div v-else>
+            <div class="font-weight-bold" v-else>
               {{ item.Country.CouName }}
             </div>
           </td>
           <td v-for="(month, apsIdx) in months" :key="apsIdx">
-            <input
+            <money
+            @input="$v.records.$each[couIdx].MisAdvertiserPriceSettings.$each[apsIdx].ApsPrice.$touch()"
+              class="form-control form-control-sm text-right"
+              :class="{'is-invalid': $v.records.$each[couIdx].MisAdvertiserPriceSettings.$each[apsIdx].ApsPrice.$error}"
               v-if="item.MisAdvertiserPriceSettings[apsIdx] && month.date == item.MisAdvertiserPriceSettings[apsIdx].ApsDate"
               v-model="item.MisAdvertiserPriceSettings[apsIdx].ApsPrice"
-            />
-            <input v-else v-on:keyup="addNewPrice($event, item, month.date)" />
+            ></money>
+            <input class="form-control form-control-sm text-right" v-else v-on:keyup="addNewPrice($event, item, month.date)" v-bind="money" />
           </td>
-          <td>
+          <td class="text-right font-weight-bold">
             {{ getTotalCountry(item) }}
           </td>
-          <td>
-            <button @click="deleteRecord(couIdx)">Delete</button>
+          <td class="text-right">
+            <button class="btn btn-sm btn-danger" @click="deleteRecord(couIdx)">Delete</button>
           </td>
         </tr>
         <tr>
-          <td>Total</td>
-          <td v-for="(month, apsIdx) in months" :key="apsIdx">
+          <td class="font-weight-bold">Total</td>
+          <td class="text-right" v-for="(month, apsIdx) in months" :key="apsIdx">
             {{ getTotalMonth(month) }}
           </td>
+          <td colspan="3"></td>
         </tr>
       </tbody>
     </table>
-    <button @click="addNewRecord">Add new item!</button>
+    <button class="btn btn-sm btn-primary" @click="addNewRecord">Add new item!</button>
+    <button class="btn btn-sm btn-success float-right" :disabled="$v.$invalid">Save all</button>
+    <hr />
+    {{ records }}
+    <hr />
+    {{ $v }}
   </div>
 </template>
 
 <script>
 /* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
-
+import { Money } from 'v-money';
 import { format, addMonths } from 'date-fns';
+
+const { required, minValue } = require('vuelidate/lib/validators');
+
 export default {
-  data: function() {
+  components: { Money },
+  validations: {
+    records: {
+      $each: {
+        MisAdvertiserPriceSettings: {
+          $each: {
+            ApsPrice: {
+              minValue: minValue(250),
+              isValidFloat(ApsPrice) {
+                return (/^-?[\d]*(\.[\d]+)?$/g).test(ApsPrice);
+              }
+            },
+          },
+        },
+      },
+    },
+  },
+  data() {
     return {
+      money: {
+        decimal: ',',
+        thousands: '.',
+        prefix: '',
+        suffix: '',
+        precision: 2,
+        masked: false,
+      },
       deleted: [],
       months: [],
       countries: [],
@@ -67,20 +104,20 @@ export default {
             {
               ApsId: 3,
               ApsCouId: 25,
-              ApsPrice: '480.367',
-              ApsDate: '2019-10-01T00:00:00',
+              ApsPrice: '4800.36',
+              ApsDate: '2019-11-01T00:00:00',
             },
             {
               ApsId: 11,
               ApsCouId: 25,
-              ApsPrice: '100.15',
-              ApsDate: '2019-11-01T00:00:00',
+              ApsPrice: '1247685.15',
+              ApsDate: '2019-12-01T00:00:00',
             },
             {
               ApsId: 12,
               ApsCouId: 25,
               ApsPrice: '321.15',
-              ApsDate: '2019-12-01T00:00:00',
+              ApsDate: '2020-01-01T00:00:00',
             },
           ],
         },
@@ -93,20 +130,20 @@ export default {
             {
               ApsId: 17,
               ApsCouId: 33,
-              ApsPrice: '184.246',
-              ApsDate: '2019-10-01T00:00:00',
+              ApsPrice: '184.24',
+              ApsDate: '2019-11-01T00:00:00',
             },
             {
               ApsId: 13,
               ApsCouId: 33,
-              ApsPrice: '184.246',
-              ApsDate: '2019-11-01T00:00:00',
+              ApsPrice: '231.42',
+              ApsDate: '2019-12-01T00:00:00',
             },
             {
               ApsId: 9,
               ApsCouId: 33,
-              ApsPrice: '685.195',
-              ApsDate: '2019-12-01T00:00:00',
+              ApsPrice: '685.15',
+              ApsDate: '2020-01-01T00:00:00',
             },
           ],
         },
@@ -118,10 +155,12 @@ export default {
     this.getCountries();
   },
   methods: {
+    formatPrice(value) {
+      const val = (value / 1).toFixed(2);
+      return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
     deleteRecord(index) {
-      // this.deleted.push(this.records[index]);
-      // this.records.splice(index, 1);
-      this.records[index].Deleted = true;
+      this.records.splice(index, 1);
     },
     selectCountry(event, item) {
       if (event.target.value <= 0) return;
@@ -140,7 +179,26 @@ export default {
           CouId: 0,
           CouName: '',
         },
-        MisAdvertiserPriceSettings: [],
+        MisAdvertiserPriceSettings: [
+          {
+            ApsId: 0,
+            ApsCouId: 0,
+            ApsPrice: 0,
+            ApsDate: this.records[0].MisAdvertiserPriceSettings[0].ApsDate,
+          },
+          {
+            ApsId: 0,
+            ApsCouId: 0,
+            ApsPrice: 0,
+            ApsDate: this.records[0].MisAdvertiserPriceSettings[1].ApsDate,
+          },
+          {
+            ApsId: 0,
+            ApsCouId: 0,
+            ApsPrice: 0,
+            ApsDate: this.records[0].MisAdvertiserPriceSettings[2].ApsDate,
+          },
+        ],
       });
     },
     getTotalMonth(month) {
@@ -150,14 +208,14 @@ export default {
           if (mps.ApsDate == month.date) sum += !isNaN(parseFloat(mps.ApsPrice)) ? parseFloat(mps.ApsPrice) : 0;
         });
       });
-      return sum.toFixed(3);
+      return this.formatPrice(sum);
     },
     getTotalCountry(item) {
       var sum = 0;
       item.MisAdvertiserPriceSettings.map(m => {
         sum += !isNaN(parseFloat(m.ApsPrice)) ? parseFloat(m.ApsPrice) : 0;
       });
-      return sum.toFixed(3);
+      return this.formatPrice(sum);
     },
     addNewPrice(event, item, month) {
       item.MisAdvertiserPriceSettings.push({ ApsId: 0, ApsCouId: item.Country.CouId, ApsPrice: event.target.value, ApsDate: month });
@@ -176,7 +234,6 @@ export default {
     },
     createMonths() {
       var date = new Date();
-      // date=addMonths(date,3);
       for (let i = 2; i >= 0; i--) {
         var longDate = addMonths(date, -i);
         var month = format(longDate, 'LLLL');
@@ -185,29 +242,11 @@ export default {
       }
     },
   },
-  watch: {
-    'records': {
-      handler: function(after, before) {
-        after.forEach(element => {
-          console.log(element.MisAdvertiserPriceSettings);
-        });
-        before.forEach(element => {
-          console.log(element.MisAdvertiserPriceSettings);
-        });
-
-
-        // let changed = after.filter(function(p, idx) {
-        //   return Object.keys(p).some(function(prop) {
-        //     console.log(p[prop] != before[idx][prop]);
-        //     return p[prop] != before[idx][prop];
-        //   });
-        // });
-      },
-      deep: true,
-    },
-  },
 };
 </script>
 
 <style>
+body {
+  font-family: 'Homenaje', sans-serif;
+}
 </style>
